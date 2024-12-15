@@ -23,8 +23,8 @@ class TautulliAPI:
 
             data = response.json()
             
-            if "response" in data and "data" in data["response"]:
-                return data["response"]["data"]
+            if "data" in data:
+                return data["data"]
             else:
                 logging.error("Unexpected API response structure")
                 return []
