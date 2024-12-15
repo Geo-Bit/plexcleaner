@@ -34,7 +34,6 @@ def main():
     movies_dir = Config.MOVIES_DIR
     logger.info(f"Scanning directory: {movies_dir}")
     
-    # Add these debug lines
     try:
         files = os.listdir(movies_dir)
         logger.info(f"Found {len(files)} items in movies directory")
@@ -51,6 +50,7 @@ def main():
     
     for filename in os.listdir(movies_dir):
         file_path = os.path.join(movies_dir, filename)
+        logger.debug(f"Checking path: {file_path}")
         
         if not os.path.isfile(file_path):
             logger.debug(f"Skipping non-file: {filename}")
@@ -61,6 +61,7 @@ def main():
             
         # Check if this file has been watched
         watch_info = watched_files.get(file_path)
+        logger.debug(f"Watch info for {filename}: {watch_info}")
         
         if watch_info:
             # Condition 1: File has been watched AND it's been >= 30 days since watched
