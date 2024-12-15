@@ -3,7 +3,7 @@ import json
 import logging
 
 # Set logging level to DEBUG to see more details
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 class TautulliAPI:
     def __init__(self, api_url, api_key):
