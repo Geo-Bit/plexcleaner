@@ -23,10 +23,11 @@ class TautulliAPI:
 
             data = response.json()
             
-            if "data" in data:
+            if isinstance(data, dict) and "data" in data:
                 return data["data"]
             else:
                 logging.error("Unexpected API response structure")
+                logging.debug(f"Received response: {data}")
                 return []
 
         except requests.exceptions.RequestException as e:
