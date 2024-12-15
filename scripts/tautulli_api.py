@@ -49,15 +49,28 @@ class TautulliAPI:
                         file_response = requests.get(self.api_url, params=file_params)
                         if file_response.status_code == 200:
                             file_data = file_response.json()
+                            logging.debug(f"Metadata response for {item['full_title']}: {json.dumps(file_data, indent=2)}")
+                            
                             if ('response' in file_data and 
                                 'data' in file_data['response'] and 
-                                'media_info' in file_data['response']['data']):
-                                item['file'] = file_data['response']['data']['media_info'][0]['parts'][0]['file']
+                                'media_info' in file_data['response']['data'] and
+                                file_data['response']['data']['media_info']):  # Check if media_info is not empty
+                                
+                                media_info = file_data['response']['data']['media_info'][0]
+                                if 'parts' in media_info and media_info['parts']:
+                                    item['file'] = media_info['parts'][0]['file']
+                                else:
+                                    logging.warning(f"No parts found in media_info for: {item['full_title']}")
+                                    item['file'] = None
                             else:
-                                logging.warning(f"Could not find file path for item: {item['full_title']}")
+                                logging.warning(f"Incomplete metadata structure for: {item['full_title']}")
                                 item['file'] = None
+                        else:
+                            logging.error(f"Failed to get metadata for {item['full_title']}: Status {file_response.status_code}")
+                            item['file'] = None
+                            
                     except Exception as e:
-                        logging.error(f"Error getting file path for {item.get('full_title', 'unknown')}: {e}")
+                        logging.error(f"Error getting file path for {item.get('full_title', 'unknown')}: {str(e)}")
                         item['file'] = None
                 
                 return media_items
