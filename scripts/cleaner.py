@@ -37,9 +37,9 @@ def main():
     try:
         files = os.listdir(movies_dir)
         logger.info(f"Found {len(files)} items in movies directory")
-        logger.debug("Directory contents:")
-        for f in files:
-            logger.debug(f"  - {f}")
+        logger.info("First 10 items in directory:")
+        for f in list(files)[:10]:
+            logger.info(f"  - {f}")
     except Exception as e:
         logger.error(f"Error listing directory contents: {e}")
     
@@ -48,25 +48,26 @@ def main():
     files_to_delete_watched = 0
     files_to_delete_unwatched = 0
     
+    logger.info("Starting to process files...")
+    
     for filename in os.listdir(movies_dir):
         file_path = os.path.join(movies_dir, filename)
-        logger.debug(f"Checking path: {file_path}")
+        logger.info(f"Examining: {filename}")
         
         if not os.path.isfile(file_path):
-            logger.debug(f"Skipping non-file: {filename}")
+            logger.info(f"Skipping non-file: {filename}")
             continue
             
         files_processed += 1
-        logger.debug(f"Processing file: {filename}")
+        logger.info(f"Processing file #{files_processed}: {filename}")
             
         # Check if this file has been watched
         watch_info = watched_files.get(file_path)
-        logger.debug(f"Watch info for {filename}: {watch_info}")
+        logger.info(f"Watch info for {filename}: {watch_info}")
         
         if watch_info:
-            # Condition 1: File has been watched AND it's been >= 30 days since watched
             days_since_watched = (current_time - datetime.fromtimestamp(watch_info['date'])).days
-            logger.debug(f"File was watched {days_since_watched} days ago: {watch_info['title']}")
+            logger.info(f"File was watched {days_since_watched} days ago: {watch_info['title']}")
             
             if days_since_watched >= 30:
                 files_to_delete_watched += 1
@@ -76,10 +77,9 @@ def main():
                 except OSError as e:
                     logger.error(f"Error deleting {file_path}: {e}")
         else:
-            # Condition 2: File has not been watched AND it's been >= 180 days since adding the file
             file_stat = os.stat(file_path)
             days_since_added = (current_time - datetime.fromtimestamp(file_stat.st_mtime)).days
-            logger.debug(f"Unwatched file age: {days_since_added} days - {filename}")
+            logger.info(f"Unwatched file age: {days_since_added} days - {filename}")
             
             if days_since_added >= 180:
                 files_to_delete_unwatched += 1

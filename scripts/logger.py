@@ -1,10 +1,21 @@
 import logging
 
 def setup_logger():
+    # Create logger
     logger = logging.getLogger('plex-cleaner')
-    handler = logging.StreamHandler()
+    logger.setLevel(logging.DEBUG)  # Set to DEBUG level
+    
+    # Create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    
+    # Create formatter
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    
+    # Add formatter to ch
+    ch.setFormatter(formatter)
+    
+    # Add ch to logger
+    logger.addHandler(ch)
+    
     return logger
