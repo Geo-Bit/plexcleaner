@@ -14,6 +14,7 @@ def main():
     now = datetime.now()
 
     for item in media_items:
+        print(f"Item: {item}, Type: {type(item)}")
         file_path = item.get('file')
         if not file_path or config.tv_directory in file_path:
             continue
