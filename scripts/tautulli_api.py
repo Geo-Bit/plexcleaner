@@ -21,22 +21,26 @@ class TautulliAPI:
                 logging.error(f"Error: API returned status code {response.status_code}")
                 return []
 
-            data = response.json()
-            
-            # Log the structure of the response
-            logging.debug(f"Response keys: {data.keys() if isinstance(data, dict) else 'not a dict'}")
-            logging.debug(f"Response type: {type(data)}")
-            
-            if isinstance(data, dict) and "data" in data:
-                return data["data"]
-            else:
-                logging.error("Unexpected API response structure")
-                logging.error(f"Full response: {data}")
+            # Check if we got HTML instead of JSON (indicates auth/login issue)
+            if response.text.strip().startswith('<!doctype html>'):
+                logging.error("Authentication error: Received login page instead of API data")
+                logging.error("Please check your Tautulli API URL and API key")
+                return []
+
+            try:
+                data = response.json()
+                if isinstance(data, dict) and "data" in data:
+                    return data["data"]
+                else:
+                    logging.error("Unexpected API response structure")
+                    logging.debug(f"Response: {data}")
+                    return []
+
+            except json.JSONDecodeError:
+                logging.error("Failed to parse JSON response")
+                logging.debug(f"Raw response: {response.text[:1000]}")  # Log first 1000 chars
                 return []
 
         except requests.exceptions.RequestException as e:
             logging.error(f"Request failed: {e}")
-            return []
-        except json.JSONDecodeError as e:
-            logging.error(f"JSON parsing failed: {e}")
             return []
