@@ -9,7 +9,7 @@ class TautulliAPI:
         response = requests.get(f"{self.base_url}/api/v2", params={
             'apikey': self.api_key,
             'cmd': 'get_history',
-            'length': 1000
+            'length': 500
         })
         response.raise_for_status()
         return response.json().get('response', {}).get('data', [])
