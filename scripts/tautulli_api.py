@@ -14,11 +14,13 @@ class TautulliAPI:
         response = requests.get(self.api_url, params=params)
         response.raise_for_status()  # Raise exception for HTTP errors
         data = response.json()  # Parse JSON response
+
+        # Log the full response for debugging
+        print("Full API Response:")
         print(data)
 
-        # Verify and return the 'data' field from the API response
         if "response" in data and "data" in data["response"]:
-            return data["response"]["data"]
+            return data["response"]["data"]  # This should return the media list
         else:
-            print(f"Unexpected API response structure: {data}")
+            print("Unexpected API response structure")
             return []
