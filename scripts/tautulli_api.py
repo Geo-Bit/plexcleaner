@@ -14,6 +14,7 @@ class TautulliAPI:
         response = requests.get(self.api_url, params=params)
         response.raise_for_status()  # Raise exception for HTTP errors
         data = response.json()  # Parse JSON response
+        print(data)
 
         # Verify and return the 'data' field from the API response
         if "response" in data and "data" in data["response"]:
