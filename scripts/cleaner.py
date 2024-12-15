@@ -11,24 +11,52 @@ def main():
     # Instantiate the TautulliAPI class
     api = TautulliAPI(api_url=Config.TAUTULLI_URL, api_key=Config.TAUTULLI_API_KEY)
     
-    # Call your API method to get watched media
+    # Get watched media history
     media_items = api.get_watched_media()
     
-    # Ensure media_items is a list of dictionaries
-    if not isinstance(media_items, list):
-        print(f"Unexpected response format: {media_items}")
-        return
-    
+    # Create a dictionary of watched files with their last watch date
+    watched_files = {}
     for item in media_items:
-        if isinstance(item, dict):  # Verify each item is a dictionary
-            file_path = item.get('file')  # Adjust key to match your actual needs
-            if file_path:
-                print(f"Processing file: {file_path}")
-                # Add your processing logic here
-            else:
-                print(f"Missing 'file' key in item: {item}")
+        if item.get('file'):
+            # If we've seen this file before, only update if this watch is more recent
+            if item['file'] not in watched_files or item['date'] > watched_files[item['file']]['date']:
+                watched_files[item['file']] = {
+                    'date': item['date'],
+                    'title': item.get('full_title', 'Unknown Title')
+                }
+    
+    # Process each file in the movies directory
+    movies_dir = Config.MOVIES_DIR
+    current_time = datetime.now()
+    
+    for filename in os.listdir(movies_dir):
+        file_path = os.path.join(movies_dir, filename)
+        
+        if not os.path.isfile(file_path):
+            continue
+            
+        # Check if this file has been watched
+        watch_info = watched_files.get(file_path)
+        
+        if watch_info:
+            # Condition 1: File has been watched AND it's been >= 30 days since watched
+            days_since_watched = (current_time - datetime.fromtimestamp(watch_info['date'])).days
+            if days_since_watched >= 30:
+                try:
+                    logger.info(f"Deleting watched file: {watch_info['title']} - Last watched: {days_since_watched} days ago")
+                    os.remove(file_path)
+                except OSError as e:
+                    logger.error(f"Error deleting {file_path}: {e}")
         else:
-            print(f"Unexpected item format: {item}, Type: {type(item)}")
+            # Condition 2: File has not been watched AND it's been >= 180 days since adding the file
+            file_stat = os.stat(file_path)
+            days_since_added = (current_time - datetime.fromtimestamp(file_stat.st_mtime)).days
+            if days_since_added >= 180:
+                try:
+                    logger.info(f"Deleting unwatched file: {filename} - Age: {days_since_added} days")
+                    os.remove(file_path)
+                except OSError as e:
+                    logger.error(f"Error deleting {file_path}: {e}")
 
 if __name__ == "__main__":
     main()
