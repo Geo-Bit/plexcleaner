@@ -8,6 +8,9 @@ from logger import setup_logger
 logger = setup_logger()
 
 def main():
+    # Instantiate the TautulliAPI class
+    api = TautulliAPI(api_url=Config.TAUTULLI_URL, api_key=Config.TAUTULLI_API_KEY)
+    
     # Call your API method to get watched media
     media_items = api.get_watched_media()
     
@@ -26,7 +29,6 @@ def main():
                 print(f"Missing 'file' key in item: {item}")
         else:
             print(f"Unexpected item format: {item}, Type: {type(item)}")
-
 
 if __name__ == "__main__":
     main()
