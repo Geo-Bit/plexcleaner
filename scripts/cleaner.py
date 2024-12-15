@@ -7,6 +7,38 @@ from logger import setup_logger
 
 logger = setup_logger()
 
+def process_movie_file(file_path, watched_files, current_time):
+    """Process a single movie file and determine if it should be deleted"""
+    # Check if this file has been watched
+    watch_info = watched_files.get(file_path)
+    logger.info(f"Watch info for {os.path.basename(file_path)}: {watch_info}")
+    
+    if watch_info:
+        days_since_watched = (current_time - datetime.fromtimestamp(watch_info['date'])).days
+        logger.info(f"File was watched {days_since_watched} days ago: {watch_info['title']}")
+        
+        if days_since_watched >= 30:
+            try:
+                logger.info(f"Deleting watched file: {watch_info['title']} - Last watched: {days_since_watched} days ago")
+                os.remove(file_path)
+                return True, 'watched'
+            except OSError as e:
+                logger.error(f"Error deleting {file_path}: {e}")
+    else:
+        file_stat = os.stat(file_path)
+        days_since_added = (current_time - datetime.fromtimestamp(file_stat.st_mtime)).days
+        logger.info(f"Unwatched file age: {days_since_added} days - {os.path.basename(file_path)}")
+        
+        if days_since_added >= 180:
+            try:
+                logger.info(f"Deleting unwatched file: {os.path.basename(file_path)} - Age: {days_since_added} days")
+                os.remove(file_path)
+                return True, 'unwatched'
+            except OSError as e:
+                logger.error(f"Error deleting {file_path}: {e}")
+    
+    return False, None
+
 def main():
     # Instantiate the TautulliAPI class
     api = TautulliAPI(api_url=Config.TAUTULLI_URL, api_key=Config.TAUTULLI_API_KEY)
@@ -21,7 +53,6 @@ def main():
     watched_files = {}
     for item in media_items:
         if item.get('file'):
-            # If we've seen this file before, only update if this watch is more recent
             if item['file'] not in watched_files or item['date'] > watched_files[item['file']]['date']:
                 watched_files[item['file']] = {
                     'date': item['date'],
@@ -34,60 +65,27 @@ def main():
     movies_dir = Config.MOVIES_DIR
     logger.info(f"Scanning directory: {movies_dir}")
     
-    try:
-        files = os.listdir(movies_dir)
-        logger.info(f"Found {len(files)} items in movies directory")
-        logger.info("First 10 items in directory:")
-        for f in list(files)[:10]:
-            logger.info(f"  - {f}")
-    except Exception as e:
-        logger.error(f"Error listing directory contents: {e}")
-    
     current_time = datetime.now()
     files_processed = 0
     files_to_delete_watched = 0
     files_to_delete_unwatched = 0
     
-    logger.info("Starting to process files...")
-    
-    for filename in os.listdir(movies_dir):
-        file_path = os.path.join(movies_dir, filename)
-        logger.info(f"Examining: {filename}")
-        
-        if not os.path.isfile(file_path):
-            logger.info(f"Skipping non-file: {filename}")
-            continue
-            
-        files_processed += 1
-        logger.info(f"Processing file #{files_processed}: {filename}")
-            
-        # Check if this file has been watched
-        watch_info = watched_files.get(file_path)
-        logger.info(f"Watch info for {filename}: {watch_info}")
-        
-        if watch_info:
-            days_since_watched = (current_time - datetime.fromtimestamp(watch_info['date'])).days
-            logger.info(f"File was watched {days_since_watched} days ago: {watch_info['title']}")
-            
-            if days_since_watched >= 30:
-                files_to_delete_watched += 1
-                try:
-                    logger.info(f"Deleting watched file: {watch_info['title']} - Last watched: {days_since_watched} days ago")
-                    os.remove(file_path)
-                except OSError as e:
-                    logger.error(f"Error deleting {file_path}: {e}")
-        else:
-            file_stat = os.stat(file_path)
-            days_since_added = (current_time - datetime.fromtimestamp(file_stat.st_mtime)).days
-            logger.info(f"Unwatched file age: {days_since_added} days - {filename}")
-            
-            if days_since_added >= 180:
-                files_to_delete_unwatched += 1
-                try:
-                    logger.info(f"Deleting unwatched file: {filename} - Age: {days_since_added} days")
-                    os.remove(file_path)
-                except OSError as e:
-                    logger.error(f"Error deleting {file_path}: {e}")
+    # Walk through all directories
+    for root, dirs, files in os.walk(movies_dir):
+        for filename in files:
+            # Only process video files
+            if filename.endswith(('.mkv', '.mp4', '.avi')):
+                file_path = os.path.join(root, filename)
+                logger.info(f"Processing: {file_path}")
+                
+                files_processed += 1
+                deleted, delete_type = process_movie_file(file_path, watched_files, current_time)
+                
+                if deleted:
+                    if delete_type == 'watched':
+                        files_to_delete_watched += 1
+                    else:
+                        files_to_delete_unwatched += 1
 
     # Log summary
     logger.info("=== Cleanup Summary ===")
