@@ -10,34 +10,38 @@ class TautulliAPI:
         params = {
             "apikey": self.api_key,
             "cmd": "get_history",
-            "length": 100  # Adjust length as needed
+            "length": 100
         }
+        
         try:
+            print(f"Making API request to: {self.api_url}")
+            print(f"With parameters: {params}")
+            
             response = requests.get(self.api_url, params=params)
-            response.raise_for_status()  # Raise exception for HTTP errors
-
-            # Log the raw response text
-            print("Raw API Response:")
-            print(response.text)
-
-            # Attempt to parse JSON response
-            data = response.json()
-            print("Parsed JSON Response:")
-            print(data)
-
-            # Extract the data if the structure matches
-            if "response" in data and "data" in data["response"]:
-                return data["response"]["data"]  # Return the media list
-            else:
-                print("Unexpected API response structure")
+            
+            print(f"Response status code: {response.status_code}")
+            print(f"Response headers: {response.headers}")
+            print("Response content:")
+            print(response.text[:500])  # Print first 500 chars of response
+            
+            if response.status_code != 200:
+                print(f"Error: API returned status code {response.status_code}")
                 return []
 
-        except json.JSONDecodeError as e:
-            print(f"JSON decoding failed: {e}")
-            print("Non-JSON response:")
-            print(response.text)
-            return []
+            data = response.json()
+            
+            if "response" in data and "data" in data["response"]:
+                return data["response"]["data"]
+            else:
+                print("Unexpected API response structure:")
+                print(data)
+                return []
 
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
+            return []
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing failed: {e}")
+            print("Raw response:")
+            print(response.text)
             return []
