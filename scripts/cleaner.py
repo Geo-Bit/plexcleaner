@@ -34,6 +34,16 @@ def main():
     movies_dir = Config.MOVIES_DIR
     logger.info(f"Scanning directory: {movies_dir}")
     
+    # Add these debug lines
+    try:
+        files = os.listdir(movies_dir)
+        logger.info(f"Found {len(files)} items in movies directory")
+        logger.debug("Directory contents:")
+        for f in files:
+            logger.debug(f"  - {f}")
+    except Exception as e:
+        logger.error(f"Error listing directory contents: {e}")
+    
     current_time = datetime.now()
     files_processed = 0
     files_to_delete_watched = 0
