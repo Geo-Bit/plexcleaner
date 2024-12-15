@@ -25,29 +25,23 @@ class TautulliAPI:
                 logging.error(f"Error: API returned status code {response.status_code}")
                 return []
 
-            # Check if we got HTML instead of JSON
-            if response.text.strip().startswith('<!doctype html>'):
-                logging.error("Authentication error: Received login page instead of API data")
-                logging.error("Please check your Tautulli API URL and API key")
-                return []
-
-            try:
-                data = response.json()
-                logging.debug(f"Response data structure: {data.keys() if isinstance(data, dict) else type(data)}")
+            data = response.json()
+            
+            # Navigate through the nested structure
+            if (isinstance(data, dict) and 
+                'response' in data and 
+                'data' in data['response'] and 
+                'data' in data['response']['data']):
                 
-                if isinstance(data, dict) and "data" in data:
-                    logging.debug(f"Found data array with {len(data['data'])} items")
-                    return data["data"]
-                else:
-                    logging.error("Unexpected API response structure")
-                    logging.error(f"Full response: {data}")
-                    return []
-
-            except json.JSONDecodeError:
-                logging.error("Failed to parse JSON response")
-                logging.error(f"Raw response text: {response.text[:500]}...")
+                return data['response']['data']['data']
+            else:
+                logging.error("Unexpected API response structure")
+                logging.debug(f"Response structure: {data.keys() if isinstance(data, dict) else type(data)}")
                 return []
 
         except requests.exceptions.RequestException as e:
             logging.error(f"Request failed: {e}")
+            return []
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON parsing failed: {e}")
             return []
