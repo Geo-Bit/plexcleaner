@@ -1,4 +1,5 @@
 import requests
+import json
 
 class TautulliAPI:
     def __init__(self, api_url, api_key):
@@ -11,16 +12,32 @@ class TautulliAPI:
             "cmd": "get_history",
             "length": 100  # Adjust length as needed
         }
-        response = requests.get(self.api_url, params=params)
-        response.raise_for_status()  # Raise exception for HTTP errors
-        data = response.json()  # Parse JSON response
+        try:
+            response = requests.get(self.api_url, params=params)
+            response.raise_for_status()  # Raise exception for HTTP errors
 
-        # Log the full response for debugging
-        print("Full API Response:")
-        print(data)
+            # Log the raw response text
+            print("Raw API Response:")
+            print(response.text)
 
-        if "response" in data and "data" in data["response"]:
-            return data["response"]["data"]  # This should return the media list
-        else:
-            print("Unexpected API response structure")
+            # Attempt to parse JSON response
+            data = response.json()
+            print("Parsed JSON Response:")
+            print(data)
+
+            # Extract the data if the structure matches
+            if "response" in data and "data" in data["response"]:
+                return data["response"]["data"]  # Return the media list
+            else:
+                print("Unexpected API response structure")
+                return []
+
+        except json.JSONDecodeError as e:
+            print(f"JSON decoding failed: {e}")
+            print("Non-JSON response:")
+            print(response.text)
+            return []
+
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
             return []
