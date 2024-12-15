@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  plexcleaner:
+    build: .
+    container_name: plexcleaner
+    environment:
+      - TAUTULLI_URL=http://tautulli:8181
+      - TAUTULLI_API_KEY=your_api_key
+      - DAYS_SINCE_WATCHED=30
+      - UNWATCHED_CUTOFF=180
+      - TV_DIRECTORY=/media/TV
+    volumes:
+      - /path/to/plex/media:/media
+    restart: unless-stopped
